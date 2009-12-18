@@ -5,9 +5,47 @@ require 'mechanize'
 require 'highline/import'
 require 'htmlentities'
 
-### Solicita o nro da matricula e senha do site da FATEC-SP
-user = ask('matricula: ')
-pass = ask("senha: " ) { |c| c.echo = "*" }
+CONF_ARQ = __FILE__ + '-config.txt'
+
+# Método para pedir as credenciais do usuário
+def get_credentials
+  user = ask('matricula: ')
+  pass = ask("senha: " ) { |c| c.echo = "*" }
+
+  exit 1 if user.empty? or pass.empty?
+  [user,pass]
+end
+
+# Método para salvar as credenciais em arquivo
+def save_credentials(user,pass)
+  if agree('salvar dados para consulta?')
+    config = File.new(CONF_ARQ, 'w')
+    config.puts "{\"#{user}\"}={\"#{pass}\"}"
+  end
+end
+
+# Criando o arquivo de salvamento a não ser que ele não exista
+File.new(CONF_ARQ, 'w').close unless File.exist?(CONF_ARQ)
+
+# Lendo linhas do arquivo
+config = File.readlines(CONF_ARQ)
+
+# Espera um arquivo de uma linha só no formato {"matricula"}={"senha"}
+# Ele só executa se tiver uma linha no arquivo senão pede usuário e senha
+if config.size == 1
+  config.first.match(/\{"([0-9]*)"\}=\{"(.*)"\}/)
+  user = $1
+  pass = $2
+
+  ### Solicita o nro da matricula e senha do site da FATEC-SP
+  unless agree('usar dados da ultima consulta?')
+    user,pass = get_credentials
+    save_credentials(user,pass)
+  end
+else
+  user,pass = get_credentials
+  save_credentials(user,pass)
+end
 
 exit 1 if user.empty? or pass.empty?
 
