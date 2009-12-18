@@ -67,7 +67,12 @@ login_form.password = pass
 page = browser.submit(login_form)
 
 ### solicita a página dos conceitos finais
-con_page = browser.click page.link_with(:href => "?task=conceitos_finais")
+begin
+  con_page = browser.click page.link_with(:href => "?task=conceitos_finais")
+rescue
+  puts "Houve problemas com o link, ou não logou, ou o site está com problemas"
+  exit 1
+end
 
 ### Faz o parse da página
 conceitos = con_page.body
